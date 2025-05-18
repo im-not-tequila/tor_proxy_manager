@@ -9,6 +9,7 @@ import aiohttp
 
 from datetime import datetime
 
+from aiohttp_socks import ProxyConnector
 from redis import asyncio as aioredis
 from dotenv import load_dotenv
 
@@ -47,9 +48,11 @@ LOOP_INTERVAL = int(os.getenv('LOOP_INTERVAL', 1200))
 async def check_proxy(session, proxy_url, site, user_agent):
     try:
         headers = {'User-Agent': user_agent}
+        connector = ProxyConnector.from_url(proxy_url)
+
         async with session.get(
                 f"https://{site}",
-                proxy=proxy_url,
+                connector=connector,
                 headers=headers,
                 timeout=aiohttp.ClientTimeout(total=TIMEOUT)
         ) as response:
