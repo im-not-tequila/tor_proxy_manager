@@ -48,11 +48,9 @@ LOOP_INTERVAL = int(os.getenv('LOOP_INTERVAL', 1200))
 async def check_proxy(session, proxy_url, site, user_agent):
     try:
         headers = {'User-Agent': user_agent}
-        connector = ProxyConnector.from_url(proxy_url)
 
         async with session.get(
                 f"https://{site}",
-                connector=connector,
                 headers=headers,
                 timeout=aiohttp.ClientTimeout(total=TIMEOUT)
         ) as response:
@@ -77,7 +75,9 @@ async def check_port(port, sites, user_agents, redis_conn, semaphore):
                     logger.debug(f"Port {port} is not open, skipping")
                     return
 
-            async with aiohttp.ClientSession() as session:
+            connector = ProxyConnector.from_url(proxy_url)
+            
+            async with aiohttp.ClientSession(connector=connector) as session:
                 for site in sites:
                     if await check_proxy(session, proxy_url, site, user_agent):
                         await redis_conn.sadd(f"site:{site}", port)
